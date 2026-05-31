@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Camera, Receipt, BarChart3 } from 'lucide-react';
+import { Home, Camera, BarChart3, Target, Award } from 'lucide-react';
 import type { ActiveTab } from '../types';
 
 interface TabBarProps {
@@ -14,8 +14,16 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
         className={`tab-item ${activeTab === 'home' ? 'active' : ''}`}
         onClick={() => setActiveTab('home')}
       >
-        <Home size={24} />
+        <Home size={22} />
         <span>ホーム</span>
+      </button>
+
+      <button
+        className={`tab-item ${activeTab === 'analytics' ? 'active' : ''}`}
+        onClick={() => setActiveTab('analytics')}
+      >
+        <BarChart3 size={22} />
+        <span>習慣分析</span>
       </button>
 
       <button
@@ -44,19 +52,19 @@ const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab }) => {
       </button>
 
       <button
-        className={`tab-item ${activeTab === 'history' ? 'active' : ''}`}
-        onClick={() => setActiveTab('history')}
+        className={`tab-item ${activeTab === 'goals' ? 'active' : ''}`}
+        onClick={() => setActiveTab('goals')}
       >
-        <Receipt size={24} />
-        <span>利用履歴</span>
+        <Target size={22} />
+        <span>目標・予測</span>
       </button>
 
       <button
-        className={`tab-item ${activeTab === 'analytics' ? 'active' : ''}`}
-        onClick={() => setActiveTab('analytics')}
+        className={`tab-item ${activeTab === 'badges' ? 'active' : ''}`}
+        onClick={() => setActiveTab('badges')}
       >
-        <BarChart3 size={24} />
-        <span>習慣分析</span>
+        <Award size={22} />
+        <span>バッジ</span>
       </button>
     </nav>
   );

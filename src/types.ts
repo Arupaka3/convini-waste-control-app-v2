@@ -8,4 +8,17 @@ export interface Receipt {
   items?: string[]; // 購入品目 (例: ["エナジードリンク", "ポテトチップス"])
 }
 
-export type ActiveTab = 'home' | 'scan' | 'history' | 'analytics';
+export type ActiveTab = 'home' | 'scan' | 'analytics' | 'goals' | 'badges';
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  price: number;
+  createdAt: string;
+}
+
+export interface SpendingGoal {
+  monthlyAmountLimit: number;
+  monthlyCountLimit: number;
+}
+
