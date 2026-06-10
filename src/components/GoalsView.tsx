@@ -6,18 +6,22 @@ interface GoalsViewProps {
   receipts: Receipt[];
   spendingGoal: SpendingGoal;
   savingsGoals: SavingsGoal[];
+  monthlyBaseSavings: number;
   onUpdateSpendingGoal: (goal: SpendingGoal) => void;
   onAddSavingsGoal: (name: string, price: number) => void;
   onDeleteSavingsGoal: (id: string) => void;
+  onUpdateBaseSavings: (amount: number) => void;
 }
 
 const GoalsView: React.FC<GoalsViewProps> = ({
   receipts,
   spendingGoal,
   savingsGoals,
+  monthlyBaseSavings,
   onUpdateSpendingGoal,
   onAddSavingsGoal,
-  onDeleteSavingsGoal
+  onDeleteSavingsGoal,
+  onUpdateBaseSavings
 }) => {
   // 今月の支出合計と利用回数の算出 (5月中)
   const thisMonthReceipts = receipts.filter(r => r.date.startsWith('2026-05'));
@@ -37,6 +41,10 @@ const GoalsView: React.FC<GoalsViewProps> = ({
   const [editCountLimit, setEditCountLimit] = useState(spendingGoal.monthlyCountLimit);
   const [isEditingSpending, setIsEditingSpending] = useState(false);
 
+  // 基本貯蓄額設定用
+  const [editBaseSavings, setEditBaseSavings] = useState(monthlyBaseSavings);
+  const [isEditingBaseSavings, setIsEditingBaseSavings] = useState(false);
+
   // 達成率計算
   const amountProgress = Math.min((currentAmount / spendingGoal.monthlyAmountLimit) * 100, 100);
   const countProgress = Math.min((currentCount / spendingGoal.monthlyCountLimit) * 100, 100);
@@ -51,6 +59,19 @@ const GoalsView: React.FC<GoalsViewProps> = ({
     setIsEditingSpending(false);
   };
 
+  // 基本貯蓄額保存処理
+  const handleSaveBaseSavings = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editBaseSavings < 0) return;
+    onUpdateBaseSavings(editBaseSavings);
+    setIsEditingBaseSavings(false);
+  };
+
+  const handleStartEditBaseSavings = () => {
+    setEditBaseSavings(monthlyBaseSavings);
+    setIsEditingBaseSavings(true);
+  };
+
   // 欲しいもの追加処理
   const handleAddSavings = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,8 +83,8 @@ const GoalsView: React.FC<GoalsViewProps> = ({
   };
 
   // 未来予測計算ロジック
-  // 仮に毎月のベース貯金額を 5,000円とし、コンビニを削減して浮いた分を上乗せする
-  const BASE_MONTHLY_SAVINGS = 5000;
+  // props の monthlyBaseSavings を基本貯蓄額として使用
+  const BASE_MONTHLY_SAVINGS = monthlyBaseSavings;
   // コンビニの1ヶ月の平均支出（現在の月間支出目安とする）
   const monthlySpent = currentAmount > 0 ? currentAmount : 8000; 
   // 削減による浮くお金 (月額)
@@ -188,6 +209,65 @@ const GoalsView: React.FC<GoalsViewProps> = ({
                 <span style={{ color: 'var(--ios-red)', fontWeight: '600' }}>⚠️ 予算または利用回数の上限を超過しています。習慣を見直しましょう！</span>
               )}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* --- Section 1.5: 基本の月間貯蓄額設定機能 --- */}
+      <div className="ios-card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <span style={{ fontSize: '15px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <PiggyBank size={18} color="var(--ios-primary)" />
+            基本の月間貯蓄額
+          </span>
+          <button
+            onClick={() => {
+              if (isEditingBaseSavings) {
+                setIsEditingBaseSavings(false);
+              } else {
+                handleStartEditBaseSavings();
+              }
+            }}
+            style={{
+              border: 'none',
+              background: 'none',
+              color: 'var(--ios-primary)',
+              fontSize: '12px',
+              fontWeight: '700',
+              cursor: 'pointer'
+            }}
+          >
+            {isEditingBaseSavings ? 'キャンセル' : '変更'}
+          </button>
+        </div>
+
+        {isEditingBaseSavings ? (
+          <form onSubmit={handleSaveBaseSavings} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+            <div className="ios-input-group" style={{ flex: 1, margin: 0 }}>
+              <label className="ios-input-label" style={{ fontSize: '11px' }}>月間貯蓄額 (円)</label>
+              <input
+                type="number"
+                className="ios-input"
+                value={editBaseSavings || ''}
+                onChange={e => setEditBaseSavings(Number(e.target.value))}
+                min="0"
+                step="1000"
+                required
+                style={{ padding: '8px 12px', fontSize: '14px' }}
+              />
+            </div>
+            <button type="submit" className="ios-btn" style={{ padding: '10px 16px', fontSize: '14px', borderRadius: '10px', width: 'auto', flexShrink: 0 }}>
+              保存
+            </button>
+          </form>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+            <span style={{ fontSize: '24px', fontWeight: '800', fontFamily: 'Outfit', color: 'var(--ios-text-main)' }}>
+              ¥{monthlyBaseSavings.toLocaleString()}
+            </span>
+            <span style={{ fontSize: '12px', color: 'var(--ios-text-secondary)', marginLeft: '6px' }}>
+              /月 (コンビニ削減分を含まないベース貯金額)
+            </span>
           </div>
         )}
       </div>

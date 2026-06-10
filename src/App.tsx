@@ -24,6 +24,7 @@ function App() {
     { id: 'g2', name: 'AirPods Pro', price: 35000, createdAt: '2026-05-20' }
   ]);
   const [linkedPayments, setLinkedPayments] = useState<string[]>([]);
+  const [monthlyBaseSavings, setMonthlyBaseSavings] = useState<number>(5000);
 
   // ローカルストレージからデータを読み込む
   useEffect(() => {
@@ -70,6 +71,16 @@ function App() {
         console.error('Failed to parse linked payments', e);
       }
     }
+
+    // 5. 基本の月間貯蓄額
+    const savedBaseSavings = localStorage.getItem('cobaco_base_savings');
+    if (savedBaseSavings) {
+      try {
+        setMonthlyBaseSavings(Number(savedBaseSavings));
+      } catch (e) {
+        console.error('Failed to parse base savings', e);
+      }
+    }
   }, []);
 
   // データを保存する
@@ -111,6 +122,13 @@ function App() {
     setSpendingGoal(newGoal);
     localStorage.setItem('cobaco_spending_goal', JSON.stringify(newGoal));
     triggerNotification('節約目標を更新しました 🎯');
+  };
+
+  // 基本貯蓄額の更新
+  const handleUpdateBaseSavings = (amount: number) => {
+    setMonthlyBaseSavings(amount);
+    localStorage.setItem('cobaco_base_savings', String(amount));
+    triggerNotification('基本の月間貯蓄額を更新しました 💰');
   };
 
   // 欲しいものの追加
@@ -257,9 +275,11 @@ function App() {
             receipts={receipts}
             spendingGoal={spendingGoal}
             savingsGoals={savingsGoals}
+            monthlyBaseSavings={monthlyBaseSavings}
             onUpdateSpendingGoal={handleUpdateSpendingGoal}
             onAddSavingsGoal={handleAddSavingsGoal}
             onDeleteSavingsGoal={handleDeleteSavingsGoal}
+            onUpdateBaseSavings={handleUpdateBaseSavings}
           />
         )}
         {activeTab === 'badges' && (

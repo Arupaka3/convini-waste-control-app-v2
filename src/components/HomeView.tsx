@@ -10,6 +10,8 @@ interface HomeViewProps {
 
 const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteReceipt }) => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [graphPeriod, setGraphPeriod] = useState<7 | 30 | 90>(7);
+  const [expandedReceipts, setExpandedReceipts] = useState<{ [id: string]: boolean }>({});
 
   // システムの「今日」の基準日付を 2026-05-31 とする
   const TODAY_STR = '2026-05-31';
@@ -144,11 +146,87 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
     return { bg: '#F2F2F7', color: '#8E8E93', name: 'その他' };
   };
 
-  // グラフデータ (過去7日間の支出推移)
-  const getGraphData = () => {
-    const days = Array.from({ length: 7 }, (_, i) => {
+  // 品目アコーディオン展開処理
+  const toggleReceiptExpand = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedReceipts(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const renderItemsList = (receiptId: string, items?: string[]) => {
+    if (!items || items.length === 0) {
+      return <span style={{ fontSize: '10px', color: 'var(--ios-text-secondary)', fontStyle: 'italic' }}>商品登録なし</span>;
+    }
+
+    const isExpanded = expandedReceipts[receiptId];
+    const limit = 2;
+    const hasMore = items.length > limit;
+    const displayedItems = isExpanded ? items : items.slice(0, limit);
+
+    return (
+      <div style={{ marginTop: '4px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          {displayedItems.map((item, idx) => (
+            <span 
+              key={idx} 
+              style={{ 
+                fontSize: '9px', 
+                backgroundColor: 'rgba(0,0,0,0.04)', 
+                padding: '2px 6px', 
+                borderRadius: '4px',
+                color: 'var(--ios-text-secondary)',
+                display: 'inline-block'
+              }}
+            >
+              {item}
+            </span>
+          ))}
+          {!isExpanded && hasMore && (
+            <span 
+              style={{ 
+                fontSize: '9px', 
+                backgroundColor: 'rgba(0,122,255,0.08)', 
+                color: 'var(--ios-primary)',
+                padding: '2px 6px', 
+                borderRadius: '4px',
+                fontWeight: '600'
+              }}
+            >
+              +{items.length - limit}件
+            </span>
+          )}
+        </div>
+        {hasMore && (
+          <button
+            onClick={(e) => toggleReceiptExpand(receiptId, e)}
+            style={{
+              border: 'none',
+              background: 'none',
+              color: 'var(--ios-primary)',
+              fontSize: '10px',
+              fontWeight: '600',
+              padding: '2px 0',
+              marginTop: '4px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px'
+            }}
+          >
+            {isExpanded ? '閉じる' : 'もっと見る'}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // グラフデータ (期間切り替え対応)
+  const getGraphData = (period: number) => {
+    const days = Array.from({ length: period }, (_, i) => {
       const d = new Date(TODAY_STR);
-      d.setDate(d.getDate() - (6 - i));
+      d.setDate(d.getDate() - (period - 1 - i));
       return d.toISOString().split('T')[0];
     });
 
@@ -163,7 +241,7 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
     return { days, dailyAmounts, maxAmount };
   };
 
-  const { days, dailyAmounts, maxAmount } = getGraphData();
+  const { days, dailyAmounts, maxAmount } = getGraphData(graphPeriod);
 
   // SVG折れ線グラフの座標計算
   const width = 360;
@@ -173,7 +251,7 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
   const chartHeight = height - padding * 2;
 
   const points = dailyAmounts.map((amt, idx) => {
-    const x = padding + (idx / 6) * chartWidth;
+    const x = padding + (idx / (graphPeriod - 1)) * chartWidth;
     const y = padding + chartHeight - (amt / maxAmount) * chartHeight;
     return { x, y, amount: amt };
   });
@@ -185,6 +263,13 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
   const areaD = points.length > 0 
     ? `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z` 
     : '';
+
+  const shouldShowLabel = (idx: number) => {
+    if (graphPeriod === 7) return true;
+    if (graphPeriod === 30) return idx % 5 === 0 || idx === 29;
+    if (graphPeriod === 90) return idx % 15 === 0 || idx === 89;
+    return false;
+  };
 
   return (
     <div>
@@ -354,11 +439,40 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', padding: '0 8px' }}>
           <span style={{ fontSize: '15px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
             <TrendingUp size={16} color="var(--ios-primary)" />
-            直近7日間の支出推移
+            支出推移
           </span>
-          <span style={{ fontSize: '11px', color: 'var(--ios-text-secondary)' }}>
-            最大: ¥{maxAmount.toLocaleString()}
-          </span>
+          {/* 期間切り替えタブ */}
+          <div style={{
+            display: 'flex',
+            backgroundColor: 'rgba(120, 120, 128, 0.08)',
+            padding: '2px',
+            borderRadius: '7px',
+          }}>
+            {([7, 30, 90] as const).map(p => {
+              const label = p === 7 ? '7日' : p === 30 ? '30日' : '3ヶ月';
+              const isActive = graphPeriod === p;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setGraphPeriod(p)}
+                  style={{
+                    border: 'none',
+                    background: isActive ? '#FFFFFF' : 'transparent',
+                    boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+                    borderRadius: '5px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: isActive ? '600' : '500',
+                    color: isActive ? 'var(--ios-text-main)' : 'var(--ios-text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.1s ease'
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
         
         <div style={{ width: '100%', height: `${height}px`, position: 'relative' }}>
@@ -390,13 +504,15 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
               {points.map((p, idx) => {
                 const date = new Date(days[idx]);
                 const dayLabel = `${date.getMonth() + 1}/${date.getDate()}`;
+                const showPoint = graphPeriod === 7 || (graphPeriod === 30 && p.amount > 0 && idx % 3 === 0) || (graphPeriod === 90 && p.amount > 0 && idx % 7 === 0);
+                const showLabel = shouldShowLabel(idx);
                 
                 return (
                   <g key={idx}>
-                    {p.amount > 0 && (
+                    {p.amount > 0 && showPoint && (
                       <>
-                        <circle cx={p.x} cy={p.y} r="4.5" fill="#FFFFFF" stroke="var(--ios-primary)" strokeWidth="2.5" />
-                        {p.amount > 300 && (
+                        <circle cx={p.x} cy={p.y} r={graphPeriod === 7 ? "4.5" : "3"} fill="#FFFFFF" stroke="var(--ios-primary)" strokeWidth={graphPeriod === 7 ? "2.5" : "1.5"} />
+                        {graphPeriod === 7 && p.amount > 300 && (
                           <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9px" fontWeight="700" fill="var(--ios-primary)" fontFamily="Outfit">
                             ¥{p.amount}
                           </text>
@@ -404,9 +520,16 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
                       </>
                     )}
                     {/* 日付ラベル */}
-                    <text x={p.x} y={height - 2} textAnchor="middle" fontSize="9px" fontWeight="600" fill="var(--ios-text-secondary)">
-                      {dayLabel}
-                    </text>
+                    {showLabel && (
+                      <>
+                        {graphPeriod > 7 && (
+                          <line x1={p.x} y1={padding} x2={p.x} y2={height - padding} stroke="rgba(0,0,0,0.03)" strokeDasharray="2,2" />
+                        )}
+                        <text x={p.x} y={height - 2} textAnchor="middle" fontSize="9px" fontWeight="600" fill="var(--ios-text-secondary)">
+                          {dayLabel}
+                        </text>
+                      </>
+                    )}
                   </g>
                 );
               })}
@@ -453,7 +576,7 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
                 className="ios-card interactive" 
                 style={{
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   padding: '14px 16px',
                   marginBottom: '10px',
                   cursor: 'pointer'
@@ -472,7 +595,8 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
                   justifyContent: 'center',
                   fontWeight: '800',
                   fontSize: '14px',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  marginTop: '2px'
                 }}>
                   {theme.name[0]}
                 </div>
@@ -490,15 +614,14 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
                     <Calendar size={10} />
                     {dateStr}
                   </span>
+                  {/* アコーディオン品目リスト */}
+                  {renderItemsList(receipt.id, receipt.items)}
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '8px' }}>
                   <div style={{ fontSize: '16px', fontWeight: 800, fontFamily: 'Outfit', color: receipt.isImpulse ? 'var(--ios-red)' : 'var(--ios-text-main)' }}>
                     ¥{receipt.amount.toLocaleString()}
                   </div>
-                  <span style={{ fontSize: '9px', color: 'var(--ios-text-secondary)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80px' }}>
-                    {receipt.items && receipt.items.length > 0 ? receipt.items[0] : '商品未登録'}
-                  </span>
                 </div>
               </div>
             );
@@ -618,11 +741,7 @@ const HomeView: React.FC<HomeViewProps> = ({ receipts, onNavigate, onDeleteRecei
                             {dateStr}
                           </span>
                         </div>
-                        {receipt.items && receipt.items.length > 0 && (
-                          <div style={{ fontSize: '9px', color: 'var(--ios-text-secondary)', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            品目: {receipt.items.join(', ')}
-                          </div>
-                        )}
+                        {renderItemsList(receipt.id, receipt.items)}
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
