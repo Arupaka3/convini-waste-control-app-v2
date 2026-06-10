@@ -69,7 +69,7 @@ const BadgesView: React.FC<BadgesViewProps> = ({ receipts, spendingGoal, linkedP
     {
       id: 'first_goal_achieved',
       name: '初回目標達成',
-      desc: 'おめでとう！初めて設定した節約目標（金額または回数）をクリアしました。',
+      desc: '初めて設定した節約目標（金額または回数）をクリアしました。',
       conditionDesc: '節約目標を達成し、履歴が1件以上ある',
       icon: '🎖️',
       color: '#FF9500',
@@ -80,7 +80,7 @@ const BadgesView: React.FC<BadgesViewProps> = ({ receipts, spendingGoal, linkedP
     {
       id: 'streak_3',
       name: 'コンビニ断ち3日達成',
-      desc: '素晴らしい忍耐力！コンビニに行かずに3日間過ごせました。',
+      desc: 'コンビニに行かずに3日間過ごせました。',
       conditionDesc: 'コンビニ未利用ストリーク3日を達成する',
       icon: '🥈',
       color: '#C0C0C0',
@@ -91,7 +91,7 @@ const BadgesView: React.FC<BadgesViewProps> = ({ receipts, spendingGoal, linkedP
     {
       id: 'streak_7',
       name: '7日連続達成',
-      desc: '驚異的な継続力！コンビニに行かずに1週間過ごせました。',
+      desc: 'コンビニに行かずに1週間過ごせました。',
       conditionDesc: 'コンビニ未利用ストリーク7日を達成する',
       icon: '🔥',
       color: '#FF3B30',
@@ -113,7 +113,7 @@ const BadgesView: React.FC<BadgesViewProps> = ({ receipts, spendingGoal, linkedP
     {
       id: 'monthly_budget',
       name: '月間目標達成',
-      desc: 'お見事！今月のコンビニ総支出を目標限度額内に収めました。',
+      desc: '今月のコンビニ総支出を目標限度額内に収めました。',
       conditionDesc: '今月の支出が目標限度額以下（データ数1以上）',
       icon: '🏆',
       color: '#007AFF',
@@ -124,7 +124,7 @@ const BadgesView: React.FC<BadgesViewProps> = ({ receipts, spendingGoal, linkedP
     {
       id: 'cashless_expert',
       name: 'キャッシュレス連携達人',
-      desc: '電子決済の自動連携を有効にし、自動でスマートな記録を開始しました。',
+      desc: '電子決済 of 自動連携を有効にし、自動でスマートな記録を開始しました。',
       conditionDesc: 'いずれかの電子決済連携を有効にする',
       icon: '💳',
       color: '#34C759',
@@ -143,13 +143,13 @@ const BadgesView: React.FC<BadgesViewProps> = ({ receipts, spendingGoal, linkedP
   });
 
   return (
-    <div>
+    <div style={{ width: '100%', boxSizing: 'border-box' }}>
       <div className="view-title">
         <span>バッジ一覧</span>
       </div>
 
       {/* バッジ獲得サマリー */}
-      <div className="ios-card" style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'linear-gradient(135deg, #1C1C1E 0%, #2C2C2E 100%)', color: '#FFFFFF', padding: '20px', marginBottom: '16px' }}>
+      <div className="ios-card" style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'linear-gradient(135deg, #1C1C1E 0%, #2C2C2E 100%)', color: '#FFFFFF', padding: '20px', marginBottom: '16px', width: '100%', boxSizing: 'border-box' }}>
         <div style={{
           width: '56px',
           height: '56px',
@@ -182,7 +182,9 @@ const BadgesView: React.FC<BadgesViewProps> = ({ receipts, spendingGoal, linkedP
         backgroundColor: 'rgba(120, 120, 128, 0.08)',
         padding: '2px',
         borderRadius: '9px',
-        marginBottom: '16px'
+        marginBottom: '16px',
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
         {(['all', 'unlocked', 'locked'] as const).map(f => {
           const label = f === 'all' ? 'すべて' : f === 'unlocked' ? '獲得済み' : '未獲得';
@@ -212,55 +214,134 @@ const BadgesView: React.FC<BadgesViewProps> = ({ receipts, spendingGoal, linkedP
       </div>
 
       {/* バッジリストグリッド */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
         {filteredBadges.length === 0 ? (
           <div style={{ textAlign: 'center', color: 'var(--ios-text-secondary)', padding: '30px 0', fontSize: '13px' }}>
             該当するバッジがありません。
           </div>
         ) : (
           filteredBadges.map(badge => {
-            return (
-              <div 
-                key={badge.id} 
-                className="ios-card" 
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                  padding: '14px 16px',
-                  margin: 0,
-                  opacity: badge.isUnlocked ? 1 : 0.6,
-                  backgroundColor: badge.isUnlocked ? '#FFFFFF' : '#FAFAFC',
-                  border: badge.isUnlocked ? '1px solid rgba(0,0,0,0.03)' : '1px dashed var(--ios-border)',
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {badge.isUnlocked ? (
-                    <CheckCircle2 size={16} color="var(--ios-primary)" strokeWidth={3} />
-                  ) : (
-                    <Lock size={16} color="var(--ios-gray-dark)" />
+            if (badge.isUnlocked) {
+              // --- 獲得済みバッジの表示 (豪華なアイコン・おめでとうコメント付き) ---
+              return (
+                <div 
+                  key={badge.id} 
+                  className="ios-card" 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    padding: '16px',
+                    margin: 0,
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid rgba(0,0,0,0.03)',
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {/* 豪華なバッジ立体風アイコン */}
+                  <div style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '50%',
+                    background: badge.gradient,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '26px',
+                    boxShadow: `0 6px 12px ${badge.color}35`,
+                    flexShrink: 0,
+                    position: 'relative'
+                  }}>
+                    {badge.icon}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--ios-text-main)' }}>
+                        {badge.name}
+                      </span>
+                      <CheckCircle2 size={14} color="var(--ios-primary)" strokeWidth={3} />
+                    </div>
+                    {/* お祝いコメント */}
+                    <p style={{ fontSize: '11px', color: '#1B9A5E', margin: '4px 0 0 0', lineHeight: '1.4', fontWeight: '600' }}>
+                      🎉 おめでとうございます！{badge.desc}
+                    </p>
+                    <div style={{ 
+                      fontSize: '9px', 
+                      color: '#1B9A5E', 
+                      marginTop: '6px', 
+                      fontWeight: '600',
+                      backgroundColor: 'var(--ios-primary-light)',
+                      border: '1px solid rgba(52, 199, 89, 0.15)',
+                      padding: '2px 6px',
+                      borderRadius: '6px',
+                      display: 'inline-block'
+                    }}>
+                      獲得条件: {badge.conditionDesc}
+                    </div>
+                  </div>
+
+                  {badge.unlockedDate && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '12px',
+                      fontSize: '9px',
+                      color: 'var(--ios-text-secondary)',
+                      fontFamily: 'Outfit',
+                      fontWeight: '600'
+                    }}>
+                      {badge.unlockedDate} 獲得
+                    </div>
                   )}
-                  <span style={{ fontSize: '14px', fontWeight: '800', color: badge.isUnlocked ? 'var(--ios-text-main)' : 'var(--ios-text-secondary)' }}>
-                    {badge.name}
-                  </span>
                 </div>
-                
-                <div style={{ 
-                  fontSize: '10px', 
-                  color: badge.isUnlocked ? '#1B9A5E' : 'var(--ios-text-secondary)', 
-                  fontWeight: '600',
-                  backgroundColor: badge.isUnlocked ? 'var(--ios-primary-light)' : '#E5E5EA40',
-                  border: badge.isUnlocked ? '1px solid rgba(52, 199, 89, 0.15)' : '1px solid var(--ios-border)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  display: 'inline-block',
-                  alignSelf: 'flex-start'
-                }}>
-                  獲得条件: {badge.conditionDesc}
+              );
+            } else {
+              // --- 未獲得バッジの表示 (アイコンと説明文は非表示、題目と条件のみ) ---
+              return (
+                <div 
+                  key={badge.id} 
+                  className="ios-card" 
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '14px 16px',
+                    margin: 0,
+                    opacity: 0.6,
+                    backgroundColor: '#FAFAFC',
+                    border: '1px dashed var(--ios-border)',
+                    transition: 'all 0.3s ease',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Lock size={16} color="var(--ios-gray-dark)" />
+                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--ios-text-secondary)' }}>
+                      {badge.name}
+                    </span>
+                  </div>
+                  
+                  <div style={{ 
+                    fontSize: '10px', 
+                    color: 'var(--ios-text-secondary)', 
+                    fontWeight: '600',
+                    backgroundColor: '#E5E5EA40',
+                    border: '1px solid var(--ios-border)',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    display: 'inline-block',
+                    alignSelf: 'flex-start'
+                  }}>
+                    獲得条件: {badge.conditionDesc}
+                  </div>
                 </div>
-              </div>
-            );
+              );
+            }
           })
         )}
       </div>
