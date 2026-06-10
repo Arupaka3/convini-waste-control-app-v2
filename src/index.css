@@ -45,8 +45,9 @@ body {
 /* スマホモックアップフレーム (PC表示用) */
 .phone-frame {
   position: relative;
-  width: 100%;
-  max-width: 430px;
+  width: 430px; /* PC表示では幅を430pxに完全固定 */
+  min-width: 320px;
+  flex-shrink: 0; /* コンテンツが縮んでも親フレームが縮まないようにする */
   height: 100vh;
   max-height: 932px;
   background-color: var(--ios-bg);
@@ -87,6 +88,8 @@ body {
     align-items: stretch;
   }
   .phone-frame {
+    width: 100%;
+    min-width: 100%;
     max-width: 100%;
     height: 100dvh;
     max-height: 100dvh;
