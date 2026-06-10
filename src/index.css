@@ -1,3 +1,7 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 :root {
   /* iOS-like Design System Tokens */
   --ios-bg: #F2F2F7;
@@ -101,6 +105,8 @@ body {
   overflow-y: auto;
   padding: 48px 16px 100px 16px; /* 上部はステータスバー、下部はタブバー分 */
   scrollbar-width: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 .scrollable::-webkit-scrollbar {
   display: none;
